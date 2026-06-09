@@ -445,3 +445,91 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Versión Simplificada - Finanzas</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <h2>Gestión de Clientes Simplificada (Ver Consola del Navegador para QR)</h2>
+    
+    <button onclick="registrarManual()">Registrar Cliente Nuevo</button>
+    <button onclick="exportarJS()">Descargar Backup (.js)</button>
+    <button onclick="simularEscaneoQR()">Simular Escaneo de QR con DNI</button>
+
+    <h3>Lista de Productos y Clientes</h3>
+    <table border="1" cellpadding="5" id="tabla">
+        <thead>
+            <tr><th>DNI</th><th>Cliente</th><th>Producto</th><th>Acciones</th></tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+    </table>
+
+    <script>
+        let db = [
+            { dni: "47586932", nombre: "Juan Mendoza", producto: "Cuenta Premium" },
+            { dni: "71829345", nombre: "María Gonzáles", producto: "Crédito Vehicular" }
+            // Nota: Se asumen los 20 registros iniciales guardados en esta colección...
+        ];
+
+        function render() {
+            const cuerpo = document.getElementById('cuerpo');
+            cuerpo.innerHTML = '';
+            db.forEach((c, idx) => {
+                cuerpo.innerHTML += `<tr>
+                    <td>${c.dni}</td><td>${c.nombre}</td><td>${c.producto}</td>
+                    <td>
+                        <button onclick="editar(${idx})">Editar</button>
+                        <button onclick="eliminar(${idx})">Eliminar</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        async function registrarManual() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Nuevo Cliente',
+                html: `<input id="d" placeholder="DNI"><input id="n" placeholder="Nombre"><input id="p" placeholder="Producto">`,
+                preConfirm: () => ({ dni: document.getElementById('d').value, nombre: document.getElementById('n').value, producto: document.getElementById('p').value })
+            });
+            if(formValues) { db.push(formValues); render(); }
+        }
+
+        function eliminar(idx) { db.splice(idx, 1); render(); }
+
+        async function editar(idx) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Editar',
+                html: `<input id="n" value="${db[idx].nombre}"><input id="p" value="${db[idx].producto}">`,
+                preConfirm: () => ({ dni: db[idx].dni, nombre: document.getElementById('n').value, producto: document.getElementById('p').value })
+            });
+            if(formValues) { db[idx] = formValues; render(); }
+        }
+
+        function simularEscaneoQR() {
+            Swal.fire({
+                title: 'Lector QR Virtual',
+                input: 'text',
+                inputLabel: 'Pasa un DNI para emular la lectura de la cámara:',
+                inputValue: '47586932'
+            }).then(res => {
+                let match = db.find(c => c.dni === res.value);
+                if(match) Swal.fire('Asistencia Grabada', `Ingreso exitoso: ${match.nombre}`, 'success');
+                else Swal.fire('Error', 'DNI no registrado', 'error');
+            });
+        }
+
+        function exportarJS() {
+            let dataStr = "data:text/javascript;charset=utf-8,const backup = " + encodeURIComponent(JSON.stringify(db));
+            let dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "backup_simplificado.js");
+            dlAnchor.click();
+        }
+
+        render();
+    </script>
+</body>
+</html>
